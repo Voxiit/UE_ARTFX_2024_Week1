@@ -4,6 +4,7 @@
 #include "Player/MainPlayerController.h"
 
 #include "Player/MainCharacter.h"
+#include "Controller/GravityGunController.h"
 
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
@@ -54,6 +55,26 @@ void AMainPlayerController::Look(const FInputActionValue& Value)
 	}
 }
 
+void AMainPlayerController::AddPitchInput(float Val)
+{
+	float Multiplier = Val * MouseSensitivityY;
+	Super::AddPitchInput(Multiplier);
+}
+
+void AMainPlayerController::AddYawInput(float Val)
+{
+	float Multiplier = Val * MouseSensitivityX;
+	Super::AddYawInput(Multiplier);
+}
+
+void AMainPlayerController::Jump()
+{
+	if (Character)
+	{
+		Character->Jump();
+	}
+}
+
 void AMainPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
@@ -70,6 +91,8 @@ void AMainPlayerController::SetupInputComponent()
 	// Bind Movements Inputs
 	EnhancedInput->BindAction(InputActionMove, ETriggerEvent::Triggered, this, &AMainPlayerController::MovePlayer);
 	EnhancedInput->BindAction(InputActionLook, ETriggerEvent::Triggered, this, &AMainPlayerController::Look);
+	EnhancedInput->BindAction(InputActionJump, ETriggerEvent::Triggered, this, &AMainPlayerController::Jump);
+
 }
 
 void AMainPlayerController::SetPawn(APawn* InPawn)
@@ -77,4 +100,12 @@ void AMainPlayerController::SetPawn(APawn* InPawn)
 	Super::SetPawn(InPawn);
 
 	Character = Cast<AMainCharacter>(InPawn);
+	if (Character)
+	{
+		GravityGunController = GetComponentByClass<UGravityGunController>();
+		if (GravityGunController)
+		{
+			GravityGunController->SetupInputComponentGravityGun(InputComponent);
+		}
+	}
 }

@@ -18,6 +18,7 @@ public:
 // Character
 protected:
 	class AMainCharacter* Character = nullptr;
+	class UGravityGunController* GravityGunController = nullptr;
 
 // Inputs
 protected:
@@ -26,7 +27,6 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Enhanced Input|Movement")
 	class UInputAction* InputActionMove;
-
 	UPROPERTY(EditDefaultsOnly, Category = "Enhanced Input|Mouse")
 	class UInputAction* InputActionLook;
 
@@ -35,4 +35,28 @@ protected:
 	void Look(const struct FInputActionValue& Value);
 
 // End of Inputs
+
+// Mouse sensitivity
+protected:
+	UPROPERTY(EditAnywhere, Category = "Input|Mouse", meta = (ClampMin = "0.1", ClampMax = "2.0"))
+	float MouseSensitivityX = 1.f;
+	UPROPERTY(EditAnywhere, Category = "Input|Mouse", meta = (ClampMin = "0.1", ClampMax = "2.0"))
+	float MouseSensitivityY = 1.f;
+
+public:
+	virtual void AddPitchInput(float Val) override;
+	virtual void AddYawInput(float Val) override;
+
+// End of Mouse sensitivity
+
+
+// Jump
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = "Enhanced Input|Jump")
+	class UInputAction* InputActionJump;
+
+protected:
+	void Jump();
+
+// End of Jump
 };
