@@ -6,6 +6,30 @@
 #include "Components/ActorComponent.h"
 #include "PickUpComponent.generated.h"
 
+UENUM()
+enum class EPickUpType : uint8
+{
+	Normal,
+	DestroyAfterThrow,
+	DestroyAfterPickUp,
+	Max UMETA(Hidden),
+};
+
+USTRUCT(BlueprintType)
+struct FPickUpStruct
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	EPickUpType PickUpType = EPickUpType::Normal;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = "1.0", ClampMax = "10.0", EditCondition = "PickUpType != EPickUpType::Normal", EditConditionHides))
+	float DestructionTimer = 5.f;
+
+};
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPickUpDestroyDelegate);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class UE5_INTRODUCTION_API UPickUpComponent : public UActorComponent
@@ -16,10 +40,21 @@ public:
 	UPickUpComponent();
 
 protected:
-	virtual void BeginPlay() override;
-
-public:	
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
+	UPROPERTY(EditAnywhere, Category = "Pick Up")
+	FPickUpStruct PickUpStruct;
 		
+
+// Detonation
+protected:
+	FTimerHandle ProjectileDestructionTimerHandle;
+
+public:
+	void StartPickUpDetonationTimer();
+	void DestroyPickUp();
+	EPickUpType GetPickUpType();
+	void ClearTimer();
+
+	FOnPickUpDestroyDelegate OnPickUpDestroy;
+
+// End of Detonation
 };

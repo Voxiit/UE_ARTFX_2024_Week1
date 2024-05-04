@@ -5,21 +5,38 @@
 
 UPickUpComponent::UPickUpComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 
 }
 
-
-void UPickUpComponent::BeginPlay()
+void UPickUpComponent::StartPickUpDetonationTimer()
 {
-	Super::BeginPlay();
-	
+	float DestructionTime = PickUpStruct.DestructionTimer;
+
+	// Prepare Timer
+	FTimerManager& TimerManager = GetOwner()->GetWorldTimerManager();
+	TimerManager.ClearTimer(ProjectileDestructionTimerHandle);
+	TimerManager.SetTimer(ProjectileDestructionTimerHandle, this, &UPickUpComponent::DestroyPickUp, DestructionTime, false);
+
 }
 
-
-void UPickUpComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UPickUpComponent::DestroyPickUp()
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	ClearTimer();
 
+	OnPickUpDestroy.Broadcast();
+
+	GetOwner()->Destroy();
 }
 
+EPickUpType UPickUpComponent::GetPickUpType()
+{
+	return PickUpStruct.PickUpType;
+}
+
+void UPickUpComponent::ClearTimer()
+{
+	// Clear Timer
+	FTimerManager& TimerManager = GetOwner()->GetWorldTimerManager();
+	TimerManager.ClearTimer(ProjectileDestructionTimerHandle);
+}

@@ -30,12 +30,21 @@ void UGravityGunComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	UpdatePickUpLocation();
+	UpdateThrowforceTimer(DeltaTime);
 }
 
 void UGravityGunComponent::OnTakeObjectInputPressed()
 {
 	if (!CameraManager.IsValid())
 	{
+		return;
+	}
+
+	// Check if pick up is present
+	if (CurrentPickUp)
+	{
+		ReleasePickUp();
 		return;
 	}
 
@@ -71,28 +80,136 @@ void UGravityGunComponent::OnTakeObjectInputPressed()
 		return;
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("WE HIT %s"), *CurrentPickUp->GetName());
+	// Get mesh
+	CurrentPickUpMesh = CurrentPickUp->GetComponentByClass<UStaticMeshComponent>();
+	if (!CurrentPickUpMesh)
+	{
+		return;
+	}
+
+	// Update collision profile
+	PreviousCollisionProfile = CurrentPickUpMesh->GetCollisionProfileName();
+	CurrentPickUpMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
+
+	// Disable physic
+	CurrentPickUpMesh->SetSimulatePhysics(false);
+
+	// Reset timer if required
+	if (CurrentPickUpComponent->GetPickUpType() != EPickUpType::Normal)
+	{
+		CurrentPickUpComponent->ClearTimer();
+	}
+
+	// Check if destruction timer required
+	if (CurrentPickUpComponent->GetPickUpType() == EPickUpType::DestroyAfterPickUp)
+	{
+		CurrentPickUpComponent->StartPickUpDetonationTimer();
+		CurrentPickUpComponent->OnPickUpDestroy.AddUniqueDynamic(this, &UGravityGunComponent::OnHoldPickUpDestroyed);
+	}
 }
 
 void UGravityGunComponent::OnThrowObjectInputPressed()
 {
-	UE_LOG(LogTemp, Log, TEXT("OnThrowObjectInputPressed"));
+	// Check for static mesh
+	if (!CurrentPickUpMesh)
+	{
+		return;
+	}
+
+	bUpdateThrowForceTimer = true;
+	CurrentTimetoReachMaxThrowForce = 0.f;
 }
 
 void UGravityGunComponent::OnThrowObjectInputReleased()
 {
-	UE_LOG(LogTemp, Log, TEXT("OnThrowObjectInputReleased"));
+	if (!CurrentPickUp)
+	{
+		return;
+	}
+
+	ReleasePickUp(true);
+
+	// Stop Updating
+	CurrentTimetoReachMaxThrowForce = 0.f;
+	bUpdateThrowForceTimer = false;
+}
+
+void UGravityGunComponent::UpdatePickUpLocation()
+{
+	if (!CurrentPickUp)
+	{
+		return;
+	}
+
+	FVector NewPickUpLocation = CameraManager->GetCameraLocation() + CameraManager->GetActorForwardVector() * PickUpDistanceFromPlayer;
+	CurrentPickUp->SetActorLocationAndRotation(NewPickUpLocation, CameraManager->GetActorQuat());
+}
+
+void UGravityGunComponent::ReleasePickUp(bool bThrow)
+{
+	// Unbind Event
+	if (CurrentPickUpComponent->GetPickUpType() == EPickUpType::DestroyAfterPickUp)
+	{
+		CurrentPickUpComponent->OnPickUpDestroy.RemoveDynamic(this, &UGravityGunComponent::OnHoldPickUpDestroyed);
+	}
+
+
+	// Set back physic
+	CurrentPickUpMesh->SetSimulatePhysics(true);
+
+	// Set back coll profile
+	CurrentPickUpMesh->SetCollisionProfileName(PreviousCollisionProfile);
+
+	// If Throw pick up
+	if (bThrow)
+	{
+		// Compute force timer
+		float ThrowForceAlpha = FMath::Clamp(CurrentTimetoReachMaxThrowForce / TimetoReachMaxThrowForce, 0.f, 1.f);
+		float ThrowForce = FMath::Lerp(PickUpThrowForce, PickUpMaxThrowForce, ThrowForceAlpha);
+		UE_LOG(LogTemp, Log, TEXT("THROW FORCE ALPHA %f - THROW FORCE %f"), ThrowForceAlpha, ThrowForce);
+
+		FVector Impulse = CameraManager->GetActorForwardVector() * ThrowForce;
+		CurrentPickUpMesh->AddImpulse(Impulse);
+		FVector AngularImpulse = FVector(FMath::RandRange(.0, PickUpAngularForce.X), FMath::RandRange(.0, PickUpAngularForce.Y), FMath::RandRange(.0, PickUpAngularForce.Z));
+		CurrentPickUpMesh->AddAngularImpulseInDegrees(AngularImpulse);
+	}
+
+	// Check if destruction timer required
+	if (CurrentPickUpComponent->GetPickUpType() == EPickUpType::DestroyAfterThrow)
+	{
+		CurrentPickUpComponent->StartPickUpDetonationTimer();
+	}
+
+	// Clean refs
+	CurrentPickUp = nullptr;
+	CurrentPickUpComponent = nullptr;
+	CurrentPickUpMesh = nullptr;
 }
 
 void UGravityGunComponent::OnIncreaseRaycastSize()
 {
 	RaycastSize = FMath::Clamp(RaycastSize + RaycastVariationByInput, InitialRaycastSize, RaycastMaxSize);
-	UE_LOG(LogTemp, Log, TEXT("NEW SIZE %f"), RaycastSize);
 }
 
 void UGravityGunComponent::OnDecreaseRaycastSize()
 {
 	RaycastSize = FMath::Clamp(RaycastSize - RaycastVariationByInput, InitialRaycastSize, RaycastMaxSize);
-	UE_LOG(LogTemp, Log, TEXT("NEW SIZE %f"), RaycastSize);
+}
+
+void UGravityGunComponent::UpdateThrowforceTimer(float DeltaTime)
+{
+	if (!bUpdateThrowForceTimer)
+	{
+		return;
+	}
+
+	CurrentTimetoReachMaxThrowForce += DeltaTime;
+}
+
+void UGravityGunComponent::OnHoldPickUpDestroyed()
+{
+	CurrentPickUpComponent->OnPickUpDestroy.RemoveDynamic(this, &UGravityGunComponent::OnHoldPickUpDestroyed);
+
+	ReleasePickUp();
 }
 
