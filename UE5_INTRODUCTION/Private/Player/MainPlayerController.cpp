@@ -87,6 +87,7 @@ void AMainPlayerController::SetupInputComponent()
 
 	// Cast the Input Component to use it as EnhancedInputComponent
 	UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(InputComponent);
+	EnhancedInput->ClearActionBindings();
 
 	// Bind Movements Inputs
 	EnhancedInput->BindAction(InputActionMove, ETriggerEvent::Triggered, this, &AMainPlayerController::MovePlayer);
@@ -99,13 +100,20 @@ void AMainPlayerController::SetPawn(APawn* InPawn)
 {
 	Super::SetPawn(InPawn);
 
+	// Uknow bug, for a reason, SetPawn is called multiple times...
+	// Small fix
+	if (Character)
+	{
+		return;
+	}
+
 	Character = Cast<AMainCharacter>(InPawn);
 	if (Character)
 	{
 		GravityGunController = GetComponentByClass<UGravityGunController>();
 		if (GravityGunController)
 		{
-			GravityGunController->SetupInputComponentGravityGun(InputComponent);
+			GravityGunController->SetupInputComponentGravityGun(InputComponent, Character);
 		}
 	}
 }

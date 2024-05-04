@@ -18,6 +18,9 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+protected:
+	TWeakObjectPtr<class AMainCharacter> Character = nullptr;
+	TWeakObjectPtr<class UGravityGunComponent> GravityGunComponent = nullptr;
 		
 // Inputs
 protected:
@@ -27,13 +30,22 @@ protected:
 	class UInputAction* ThrowObjectInputAction;
 
 public:
-	void SetupInputComponentGravityGun(TObjectPtr<class UInputComponent> InputComponent);
+	void SetupInputComponentGravityGun(TObjectPtr<class UInputComponent> InputComponent, class AMainCharacter* InCharacter);
 
 protected:
 	void OnTakeObjectInputPressed();
 	void OnThrowObjectInputTriggered(const struct FInputActionValue& Value);
 
-
 // End of Inputs
 
+
+// Exercice 1
+protected:
+	UPROPERTY(EditAnywhere, Category = "Enhanced Input")
+	class UInputAction* IncreaseRaycastSizeInputAction;
+
+protected:
+	void OnIncreaseRaycastSizeInputTriggered(const struct FInputActionValue& Value);
+
+// End of Exercice 1
 };
