@@ -5,6 +5,9 @@
 
 #include "Player/MainCharacter.h"
 #include "Controller/GravityGunController.h"
+#include "Kismet/GameplayStatics.h"
+#include "Gameplay/Goal/Goal.h"
+#include "Gameplay/Score/ScoreComponent.h"
 
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
@@ -75,6 +78,43 @@ void AMainPlayerController::Jump()
 	}
 }
 
+void AMainPlayerController::CountScore()
+{
+	// Check Goals
+	if (Goals.Num() == 0)
+	{
+		UE_LOG(LogTemp, Log, TEXT("THER'S NO GOAL IN THE MAP"));
+		return;
+	}
+
+	// Print Each Score
+	for (AActor* CurrentGoal : Goals)
+	{
+		AGoal* Goal = Cast<AGoal>(CurrentGoal);
+		if (Goal)
+		{
+			unsigned int PickUpInGoal = Goal->CountPickUpInGoal();
+			UE_LOG(LogTemp, Log, TEXT("THER'S %d PICK UP IN %s"), PickUpInGoal, *Goal->GetName());
+		}
+	}
+}
+
+void AMainPlayerController::OnDisplayScoreByTeamInputPressed()
+{
+	if (ScoreComponent)
+	{
+		ScoreComponent->DisplayScore();
+	}
+}
+
+void AMainPlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// Get Goals
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGoal::StaticClass(), Goals);
+}
+
 void AMainPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
@@ -94,6 +134,12 @@ void AMainPlayerController::SetupInputComponent()
 	EnhancedInput->BindAction(InputActionLook, ETriggerEvent::Triggered, this, &AMainPlayerController::Look);
 	EnhancedInput->BindAction(InputActionJump, ETriggerEvent::Triggered, this, &AMainPlayerController::Jump);
 
+
+	// Exercice 3 - Bind Score
+	EnhancedInput->BindAction(InputActionScore, ETriggerEvent::Triggered, this, &AMainPlayerController::CountScore);
+
+	// Exercice 4 - Bind Score
+	EnhancedInput->BindAction(InputActionScoreByTeam, ETriggerEvent::Triggered, this, &AMainPlayerController::OnDisplayScoreByTeamInputPressed);
 }
 
 void AMainPlayerController::SetPawn(APawn* InPawn)
@@ -115,5 +161,8 @@ void AMainPlayerController::SetPawn(APawn* InPawn)
 		{
 			GravityGunController->SetupInputComponentGravityGun(InputComponent, Character);
 		}
+
+		// Exo 4
+		ScoreComponent = Character->GetComponentByClass<UScoreComponent>();
 	}
 }

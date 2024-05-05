@@ -11,6 +11,9 @@ class UE5_INTRODUCTION_API AMainPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
+protected:
+	virtual void BeginPlay() override;
+
 public:
 	virtual void SetupInputComponent() override;
 	virtual void SetPawn(APawn* InPawn) override;
@@ -59,4 +62,27 @@ protected:
 	void Jump();
 
 // End of Jump
+
+
+// Score
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = "Enhanced Input|Score")
+	class UInputAction* InputActionScore;
+	TArray<AActor*> Goals;
+
+protected:
+	void CountScore();
+
+// End of Score
+
+// Exercice 4
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = "Enhanced Input|Score")
+	class UInputAction* InputActionScoreByTeam;
+	class UScoreComponent* ScoreComponent = nullptr;
+
+protected:
+	void OnDisplayScoreByTeamInputPressed();
+
+// End of Exercice 4
 };
