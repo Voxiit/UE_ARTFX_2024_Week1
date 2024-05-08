@@ -5,6 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Player/MainCharacter.h"
 #include "Gameplay/PickUpComponent.h"
+#include "Curves/CurveFloat.h"
 
 UGravityGunComponent::UGravityGunComponent()
 {
@@ -24,7 +25,6 @@ void UGravityGunComponent::BeginPlay()
 	// Exercice 1
 	InitialRaycastSize = RaycastSize;
 }
-
 
 void UGravityGunComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
@@ -79,7 +79,7 @@ void UGravityGunComponent::OnThrowObjectInputPressed()
 	}
 
 	bUpdateThrowForceTimer = true;
-	CurrentTimetoReachMaxThrowForce = 0.f;
+	CurrentTimeToReachMaxThrowForce = 0.f;
 }
 
 void UGravityGunComponent::OnThrowObjectInputReleased()
@@ -92,7 +92,7 @@ void UGravityGunComponent::OnThrowObjectInputReleased()
 	ReleasePickUp(true);
 
 	// Stop Updating
-	CurrentTimetoReachMaxThrowForce = 0.f;
+	CurrentTimeToReachMaxThrowForce = 0.f;
 	bUpdateThrowForceTimer = false;
 }
 
@@ -126,8 +126,18 @@ void UGravityGunComponent::ReleasePickUp(bool bThrow)
 	if (bThrow)
 	{
 		// Compute force timer
-		float ThrowForceAlpha = FMath::Clamp(CurrentTimetoReachMaxThrowForce / TimetoReachMaxThrowForce, 0.f, 1.f);
-		float ThrowForce = FMath::Lerp(PickUpThrowForce, PickUpMaxThrowForce, ThrowForceAlpha);
+		float ThrowForceAlpha = FMath::Clamp(CurrentTimeToReachMaxThrowForce / TimeToReachMaxThrowForce, 0.f, 1.f);
+
+		float ThrowForce = 0.f;
+		// Use Curve
+		if (ThrowForceCurve)
+		{
+			ThrowForce = ThrowForceCurve->GetFloatValue(ThrowForceAlpha);
+		}
+		else
+		{
+			ThrowForce = FMath::Lerp(PickUpThrowForce, PickUpMaxThrowForce, ThrowForceAlpha);
+		}
 		UE_LOG(LogTemp, Log, TEXT("THROW FORCE ALPHA %f - THROW FORCE %f"), ThrowForceAlpha, ThrowForce);
 
 		FVector Impulse = CameraManager->GetActorForwardVector() * ThrowForce;
@@ -165,7 +175,7 @@ void UGravityGunComponent::UpdateThrowforceTimer(float DeltaTime)
 		return;
 	}
 
-	CurrentTimetoReachMaxThrowForce += DeltaTime;
+	CurrentTimeToReachMaxThrowForce += DeltaTime;
 }
 
 void UGravityGunComponent::OnHoldPickUpDestroyed(EPickUpType PickUpType)
@@ -221,6 +231,9 @@ void UGravityGunComponent::PlacePickUpInHand(AActor* PickUp)
 		CurrentPickUpComponent->StartPickUpDetonationTimer();
 		CurrentPickUpComponent->OnPickUpDestroy.AddUniqueDynamic(this, &UGravityGunComponent::OnHoldPickUpDestroyed);
 	}
+
+	PickUpTaken++;
+	OnPickUpTaken.Broadcast(PickUpTaken);
 }
 
 void UGravityGunComponent::OnDestroyPickUpInHand()
@@ -233,5 +246,15 @@ void UGravityGunComponent::OnDestroyPickUpInHand()
 	UPickUpComponent* PickUpToDestroy = CurrentPickUpComponent;
 	ReleasePickUp();
 	PickUpToDestroy->DestroyPickUp();
+}
+
+float UGravityGunComponent::GetTimeToReachMaxThrowForce()
+{
+	return TimeToReachMaxThrowForce;
+}
+
+float UGravityGunComponent::GetCurrentTimeToReachMaxThrowForce()
+{
+	return CurrentTimeToReachMaxThrowForce;
 }
 

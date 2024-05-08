@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "GravityGunComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FPickUpTakenDelegate, int, NumberPickUpTaken);
 
 UCLASS(Abstract,Blueprintable, ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class UE5_INTRODUCTION_API UGravityGunComponent : public UActorComponent
@@ -83,8 +84,8 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "GravityGun|Exo2")
 	float PickUpMaxThrowForce = 3000.f;
 	UPROPERTY(EditAnywhere, Category = "GravityGun|Exo2", meta = (ClampMin = "1.0", ClampMax = "50.0"))
-	float TimetoReachMaxThrowForce = 5.f;
-	float CurrentTimetoReachMaxThrowForce = 0.f;
+	float TimeToReachMaxThrowForce = 5.f;
+	float CurrentTimeToReachMaxThrowForce = 0.f;
 	bool bUpdateThrowForceTimer = false;
 
 protected:
@@ -108,6 +109,31 @@ public:
 	void OnDestroyPickUpInHand();
 
 // End of Noted Exercise
+
+
+// BP Event
+protected:
+	int PickUpTaken = 0;
+
+public:
+	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	FPickUpTakenDelegate OnPickUpTaken;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gravity Gun")
+	float GetTimeToReachMaxThrowForce();
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gravity Gun")
+	float GetCurrentTimeToReachMaxThrowForce();
+
+// End of BP Event
+
+
+// Curve
+protected:
+	UPROPERTY(EditAnywhere, Category = "GravityGun|Curve")
+	class UCurveFloat* ThrowForceCurve = nullptr;
+
+// End of Curve
+
 
 // Debug
 protected:
