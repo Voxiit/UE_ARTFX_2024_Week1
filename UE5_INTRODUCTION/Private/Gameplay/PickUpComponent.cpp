@@ -2,11 +2,42 @@
 
 
 #include "Gameplay/PickUpComponent.h"
+#include "UObject/ObjectSaveContext.h"
+
+// Noted Exercice
+static FName PickUpTag = "PICKUP";
 
 UPickUpComponent::UPickUpComponent()
 {
-	PrimaryComponentTick.bCanEverTick = false;
+	PrimaryComponentTick.bCanEverTick = false;	
+}
 
+void UPickUpComponent::PreSave(FObjectPreSaveContext SaveContext)
+{
+	Super::PreSave(SaveContext);
+
+	// Add tag to a Pick Up to find them more easily
+	AActor* Owner = GetOwner();
+	if (!Owner->Tags.Contains(PickUpTag))
+	{
+		Owner->Tags.Add(PickUpTag);
+	}
+}
+
+void UPickUpComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
+{
+	Super::OnComponentDestroyed(bDestroyingHierarchy);
+
+#if WITH_EDITOR
+	if (GetWorld() && GetWorld()->IsPlayInEditor())
+	{
+		AActor* Owner = GetOwner();
+		if (Owner->Tags.Contains(PickUpTag))
+		{
+			Owner->Tags.Remove(PickUpTag);
+		}
+	}
+#endif
 }
 
 void UPickUpComponent::StartPickUpDetonationTimer()
@@ -24,7 +55,7 @@ void UPickUpComponent::DestroyPickUp()
 {
 	ClearTimer();
 
-	OnPickUpDestroy.Broadcast();
+	OnPickUpDestroy.Broadcast(PickUpStruct.PickUpType);
 
 	GetOwner()->Destroy();
 }

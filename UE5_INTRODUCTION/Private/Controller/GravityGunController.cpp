@@ -17,13 +17,6 @@ UGravityGunController::UGravityGunController()
 
 }
 
-
-void UGravityGunController::BeginPlay()
-{
-	Super::BeginPlay();
-
-}
-
 void UGravityGunController::SetupInputComponentGravityGun(TObjectPtr<class UInputComponent> InputComponent, AMainCharacter* InCharacter)
 {
 	// Get Character and comp
@@ -42,6 +35,9 @@ void UGravityGunController::SetupInputComponentGravityGun(TObjectPtr<class UInpu
 
 	// Exercice 1
 	EnhancedInput->BindAction(IncreaseRaycastSizeInputAction, ETriggerEvent::Triggered, this, &UGravityGunController::OnIncreaseRaycastSizeInputTriggered);
+
+	// Noted Exercice
+	EnhancedInput->BindAction(DestroyPickUpInHandInputAction, ETriggerEvent::Triggered, this, &UGravityGunController::OnDestroyPickUpInHand);
 }
 
 void UGravityGunController::OnTakeObjectInputPressed()
@@ -91,5 +87,13 @@ void UGravityGunController::OnIncreaseRaycastSizeInputTriggered(const FInputActi
 	else
 	{
 		GravityGunComponent->OnDecreaseRaycastSize();
+	}
+}
+
+void UGravityGunController::OnDestroyPickUpInHand()
+{
+	if (GravityGunComponent.IsValid())
+	{
+		GravityGunComponent->OnDestroyPickUpInHand();
 	}
 }

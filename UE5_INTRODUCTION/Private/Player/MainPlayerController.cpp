@@ -5,6 +5,7 @@
 
 #include "Player/MainCharacter.h"
 #include "Controller/GravityGunController.h"
+#include "Controller/SpawnerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "Gameplay/Goal/Goal.h"
 #include "Gameplay/Score/ScoreComponent.h"
@@ -164,5 +165,12 @@ void AMainPlayerController::SetPawn(APawn* InPawn)
 
 		// Exo 4
 		ScoreComponent = Character->GetComponentByClass<UScoreComponent>();
+
+		// Noted Exercice
+		SpawnerController = GetComponentByClass<USpawnerController>();
+		if (SpawnerController)
+		{
+			SpawnerController->SetupInputComponentSpawnerController(InputComponent, Character);
+		}
 	}
 }

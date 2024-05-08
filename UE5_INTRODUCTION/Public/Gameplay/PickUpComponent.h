@@ -29,7 +29,7 @@ public:
 
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPickUpDestroyDelegate);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPickUpDestroyDelegate, EPickUpType, PickUpType);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class UE5_INTRODUCTION_API UPickUpComponent : public UActorComponent
@@ -38,6 +38,10 @@ class UE5_INTRODUCTION_API UPickUpComponent : public UActorComponent
 
 public:	
 	UPickUpComponent();
+
+// Noted Exercice
+	virtual void PreSave(FObjectPreSaveContext SaveContext) override;
+	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Pick Up")

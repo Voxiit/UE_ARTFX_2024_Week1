@@ -16,9 +16,6 @@ public:
 	UGravityGunController();
 
 protected:
-	virtual void BeginPlay() override;
-
-protected:
 	TWeakObjectPtr<class AMainCharacter> Character = nullptr;
 	TWeakObjectPtr<class UGravityGunComponent> GravityGunComponent = nullptr;
 		
@@ -48,4 +45,15 @@ protected:
 	void OnIncreaseRaycastSizeInputTriggered(const struct FInputActionValue& Value);
 
 // End of Exercice 1
+
+
+// Noted Exercice
+protected:
+	UPROPERTY(EditAnywhere, Category = "Enhanced Input")
+	class UInputAction* DestroyPickUpInHandInputAction;
+
+protected:
+	void OnDestroyPickUpInHand();
+
+// Noted Exercice
 };

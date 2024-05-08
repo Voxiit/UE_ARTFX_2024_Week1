@@ -96,10 +96,18 @@ protected:
 // Event On Pick Up Destroy
 protected:
 	UFUNCTION()
-	void OnHoldPickUpDestroyed();
+	void OnHoldPickUpDestroyed(EPickUpType PickUpType);
 
 // End of Event On Pick Up Destroy
 
+
+// Noted Exercise
+public:
+	bool HasPickUpInHand();
+	void PlacePickUpInHand(AActor* PickUp);
+	void OnDestroyPickUpInHand();
+
+// End of Noted Exercise
 
 // Debug
 protected:

@@ -67,45 +67,7 @@ void UGravityGunComponent::OnTakeObjectInputPressed()
 		UE_LOG(LogTemp, Log, TEXT("WE HIT NOTHING"));
 
 	// Get Pick Up
-	CurrentPickUp = RaycastHit.GetActor();
-	if (!CurrentPickUp)
-	{
-		return;
-	}
-
-	// Check for Pick Up comp
-	CurrentPickUpComponent = CurrentPickUp->GetComponentByClass<UPickUpComponent>();
-	if (!CurrentPickUpComponent)
-	{
-		return;
-	}
-
-	// Get mesh
-	CurrentPickUpMesh = CurrentPickUp->GetComponentByClass<UStaticMeshComponent>();
-	if (!CurrentPickUpMesh)
-	{
-		return;
-	}
-
-	// Update collision profile
-	PreviousCollisionProfile = CurrentPickUpMesh->GetCollisionProfileName();
-	CurrentPickUpMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
-
-	// Disable physic
-	CurrentPickUpMesh->SetSimulatePhysics(false);
-
-	// Reset timer if required
-	if (CurrentPickUpComponent->GetPickUpType() != EPickUpType::Normal)
-	{
-		CurrentPickUpComponent->ClearTimer();
-	}
-
-	// Check if destruction timer required
-	if (CurrentPickUpComponent->GetPickUpType() == EPickUpType::DestroyAfterPickUp)
-	{
-		CurrentPickUpComponent->StartPickUpDetonationTimer();
-		CurrentPickUpComponent->OnPickUpDestroy.AddUniqueDynamic(this, &UGravityGunComponent::OnHoldPickUpDestroyed);
-	}
+	PlacePickUpInHand(RaycastHit.GetActor());
 }
 
 void UGravityGunComponent::OnThrowObjectInputPressed()
@@ -206,10 +168,70 @@ void UGravityGunComponent::UpdateThrowforceTimer(float DeltaTime)
 	CurrentTimetoReachMaxThrowForce += DeltaTime;
 }
 
-void UGravityGunComponent::OnHoldPickUpDestroyed()
+void UGravityGunComponent::OnHoldPickUpDestroyed(EPickUpType PickUpType)
 {
 	CurrentPickUpComponent->OnPickUpDestroy.RemoveDynamic(this, &UGravityGunComponent::OnHoldPickUpDestroyed);
 
 	ReleasePickUp();
+}
+
+bool UGravityGunComponent::HasPickUpInHand()
+{
+	return IsValid(CurrentPickUp);
+}
+
+void UGravityGunComponent::PlacePickUpInHand(AActor* PickUp)
+{
+	CurrentPickUp = PickUp;
+	if (!CurrentPickUp)
+	{
+		return;
+	}
+
+	// Check for Pick Up comp
+	CurrentPickUpComponent = CurrentPickUp->GetComponentByClass<UPickUpComponent>();
+	if (!CurrentPickUpComponent)
+	{
+		return;
+	}
+
+	// Get mesh
+	CurrentPickUpMesh = CurrentPickUp->GetComponentByClass<UStaticMeshComponent>();
+	if (!CurrentPickUpMesh)
+	{
+		return;
+	}
+
+	// Update collision profile
+	PreviousCollisionProfile = CurrentPickUpMesh->GetCollisionProfileName();
+	CurrentPickUpMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
+
+	// Disable physic
+	CurrentPickUpMesh->SetSimulatePhysics(false);
+
+	// Reset timer if required
+	if (CurrentPickUpComponent->GetPickUpType() != EPickUpType::Normal)
+	{
+		CurrentPickUpComponent->ClearTimer();
+	}
+
+	// Check if destruction timer required
+	if (CurrentPickUpComponent->GetPickUpType() == EPickUpType::DestroyAfterPickUp)
+	{
+		CurrentPickUpComponent->StartPickUpDetonationTimer();
+		CurrentPickUpComponent->OnPickUpDestroy.AddUniqueDynamic(this, &UGravityGunComponent::OnHoldPickUpDestroyed);
+	}
+}
+
+void UGravityGunComponent::OnDestroyPickUpInHand()
+{
+	if (!CurrentPickUpComponent)
+	{
+		return;
+	}
+
+	UPickUpComponent* PickUpToDestroy = CurrentPickUpComponent;
+	ReleasePickUp();
+	PickUpToDestroy->DestroyPickUp();
 }
 

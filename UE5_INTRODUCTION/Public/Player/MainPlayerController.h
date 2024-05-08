@@ -85,4 +85,10 @@ protected:
 	void OnDisplayScoreByTeamInputPressed();
 
 // End of Exercice 4
+
+// Noted Exercice
+protected:
+	class USpawnerController* SpawnerController = nullptr;
+
+// End of Noted Exercice
 };
