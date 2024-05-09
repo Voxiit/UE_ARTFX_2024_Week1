@@ -125,24 +125,41 @@ void UGravityGunComponent::ReleasePickUp(bool bThrow)
 	// If Throw pick up
 	if (bThrow)
 	{
-		// Compute force timer
-		float ThrowForceAlpha = FMath::Clamp(CurrentTimeToReachMaxThrowForce / TimeToReachMaxThrowForce, 0.f, 1.f);
-
+		// Prepare variables
 		float ThrowForce = 0.f;
-		// Use Curve
-		if (ThrowForceCurve)
+		FVector AngularImpulse = FVector::ZeroVector;
+		float ThrowForceAlpha = 0.f;
+
+		// Use Data Asset
+		if (GravityGunDataAsset)
 		{
-			ThrowForce = ThrowForceCurve->GetFloatValue(ThrowForceAlpha);
+			ThrowForceAlpha = FMath::Clamp(CurrentTimeToReachMaxThrowForce / GravityGunDataAsset->TimeToReachMaxThrowForce, 0.f, 1.f);
+			ThrowForce = FMath::Lerp(GravityGunDataAsset->MinThrowForce, GravityGunDataAsset->MaxThrowForce, ThrowForceAlpha);
+			AngularImpulse = FVector(FMath::RandRange(.0, GravityGunDataAsset->ThrowAngularForce.X), FMath::RandRange(.0, GravityGunDataAsset->ThrowAngularForce.Y), FMath::RandRange(.0, GravityGunDataAsset->ThrowAngularForce.Z));
 		}
+		// Use normal data
 		else
 		{
-			ThrowForce = FMath::Lerp(PickUpThrowForce, PickUpMaxThrowForce, ThrowForceAlpha);
-		}
-		UE_LOG(LogTemp, Log, TEXT("THROW FORCE ALPHA %f - THROW FORCE %f"), ThrowForceAlpha, ThrowForce);
+			// Compute force timer
+			ThrowForceAlpha = FMath::Clamp(CurrentTimeToReachMaxThrowForce / TimeToReachMaxThrowForce, 0.f, 1.f);
 
+			// Use Curve
+			if (ThrowForceCurve)
+			{
+				ThrowForce = ThrowForceCurve->GetFloatValue(ThrowForceAlpha);
+			}
+			else
+			{
+				ThrowForce = FMath::Lerp(PickUpThrowForce, PickUpMaxThrowForce, ThrowForceAlpha);
+			}
+		
+			// Compute Angular Impulse
+			AngularImpulse = FVector(FMath::RandRange(.0, PickUpAngularForce.X), FMath::RandRange(.0, PickUpAngularForce.Y), FMath::RandRange(.0, PickUpAngularForce.Z));
+		}
+
+		UE_LOG(LogTemp, Log, TEXT("THROW FORCE ALPHA %f - THROW FORCE %f"), ThrowForceAlpha, ThrowForce);
 		FVector Impulse = CameraManager->GetActorForwardVector() * ThrowForce;
 		CurrentPickUpMesh->AddImpulse(Impulse);
-		FVector AngularImpulse = FVector(FMath::RandRange(.0, PickUpAngularForce.X), FMath::RandRange(.0, PickUpAngularForce.Y), FMath::RandRange(.0, PickUpAngularForce.Z));
 		CurrentPickUpMesh->AddAngularImpulseInDegrees(AngularImpulse);
 	}
 
@@ -250,7 +267,7 @@ void UGravityGunComponent::OnDestroyPickUpInHand()
 
 float UGravityGunComponent::GetTimeToReachMaxThrowForce()
 {
-	return TimeToReachMaxThrowForce;
+	return GravityGunDataAsset ? GravityGunDataAsset->TimeToReachMaxThrowForce : TimeToReachMaxThrowForce;
 }
 
 float UGravityGunComponent::GetCurrentTimeToReachMaxThrowForce()

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Gameplay/GravityGunDataAsset.h"
 #include "GravityGunComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FPickUpTakenDelegate, int, NumberPickUpTaken);
@@ -135,6 +136,13 @@ protected:
 // End of Curve
 
 
+// Data Asset
+protected:
+	UPROPERTY(EditAnywhere, Category = "GravityGun|Data Asset")
+	UGravityGunDataAsset* GravityGunDataAsset = nullptr;
+
+// End of Data Asset
+
 // Debug
 protected:
 	UPROPERTY(EditAnywhere, Category = "GravityGun|Debug")
@@ -143,5 +151,4 @@ protected:
 	float TimerDebugRaycast = 5.f;
 
 // End of Debug
-
 };
